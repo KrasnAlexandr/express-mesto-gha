@@ -33,7 +33,7 @@ const deleteCard = (req, res) => {
 };
 
 const likeCard = (req, res) => {
-  const cardId = req.params.cardId;
+  const { cardId } = req.params;
 
   if (cardId.length !== 24) {
     res.status(400).send(({ message: `Указан некорректный id: ${cardId} карточки.` }));
@@ -52,7 +52,7 @@ const likeCard = (req, res) => {
 };
 
 const dislikeCard = (req, res) => {
-  const cardId = req.params.cardId;
+  const { cardId } = req.params;
 
   if (cardId.length !== 24) {
     res.status(400).send(({ message: `Указан некорректный id: ${cardId} карточки.` }));

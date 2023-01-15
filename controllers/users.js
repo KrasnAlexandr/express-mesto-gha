@@ -7,7 +7,7 @@ const getAllUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  const userId = req.params.userId;
+  const { userId } = req.params;
 
   if (userId.length !== 24) {
     res.status(400).send(({ message: `Указан некорректный id: ${userId} пользователя.` }));
