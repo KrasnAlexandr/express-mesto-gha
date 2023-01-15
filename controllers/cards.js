@@ -33,10 +33,17 @@ const deleteCard = (req, res) => {
 };
 
 const likeCard = (req, res) => {
-  Card.findByIdAndUpdate(req.params.cardId, { $addToSet: { likes: req.user._id } }, { new: true })
+  const cardId = req.params.cardId;
+
+  if (cardId.length !== 24) {
+    res.status(400).send(({ message: `Указан некорректный id: ${cardId} карточки.` }));
+    return;
+  }
+
+  Card.findByIdAndUpdate(cardId, { $addToSet: { likes: req.user._id } }, { new: true })
     .then((card) => {
       if (!card) {
-        res.status(404).send(({ message: `Передан несуществующий id: ${req.params.cardId} карточки.` }));
+        res.status(404).send(({ message: `Передан несуществующий id: ${cardId} карточки.` }));
       } else {
         res.send(card);
       }
@@ -45,10 +52,17 @@ const likeCard = (req, res) => {
 };
 
 const dislikeCard = (req, res) => {
-  Card.findByIdAndUpdate(req.params.cardId, { $pull: { likes: req.user._id } }, { new: true })
+  const cardId = req.params.cardId;
+
+  if (cardId.length !== 24) {
+    res.status(400).send(({ message: `Указан некорректный id: ${cardId} карточки.` }));
+    return;
+  }
+
+  Card.findByIdAndUpdate(cardId, { $pull: { likes: req.user._id } }, { new: true })
     .then((card) => {
       if (!card) {
-        res.status(404).send(({ message: `Передан несуществующий id: ${req.params.cardId} карточки.` }));
+        res.status(404).send(({ message: `Передан несуществующий id: ${cardId} карточки.` }));
       } else {
         res.send(card);
       }

@@ -7,10 +7,17 @@ const getAllUsers = (req, res) => {
 };
 
 const getUserById = (req, res) => {
-  User.findById(req.params.userId)
+  const userId = req.params.userId;
+
+  if (userId.length !== 24) {
+    res.status(400).send(({ message: `Указан некорректный id: ${userId} пользователя.` }));
+    return;
+  }
+
+  User.findById(userId)
     .then((user) => {
       if (!user) {
-        res.status(404).send(({ message: `Пользователь по указанному id: ${req.params.userId} не найден.` }));
+        res.status(404).send(({ message: `Пользователь по указанному id: ${userId} не найден.` }));
       } else {
         res.send(user);
       }
