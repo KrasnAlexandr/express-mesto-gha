@@ -22,7 +22,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use('/users', users);
 app.use('/cards', cards);
-app.use('/:404', (req, res) => {
+app.use('*', (req, res) => {
   res.status(404).send({ message: 'По вашему запросу ничего не найдено' });
 }); // должен быть последним
 
