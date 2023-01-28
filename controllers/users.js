@@ -1,76 +1,166 @@
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const User = require('../models/user');
+const BadRequestError = require('../errors/badRequestError');
+const UnauthorizedError = require('../errors/unauthorizedError');
+const NotFoundError = require('../errors/notFoundError');
+const RequestConflictError = require('../errors/requestConflictError');
 
-const getAllUsers = (req, res) => {
+const getAllUsers = (req, res, next) => {
   User.find({})
     .then((users) => res.send(users))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((err) => next(err));
 };
 
-const getUserById = (req, res) => {
+const getUserById = (req, res, next) => {
   const { userId } = req.params;
 
   if (userId.length !== 24) {
-    res.status(400).send(({ message: `Указан некорректный id: ${userId} пользователя.` }));
+    next(new BadRequestError(`Указан некорректный id: ${userId} пользователя.`));
     return;
   }
 
-  User.findById(userId)
+  User.findById({ userId })
     .then((user) => {
       if (!user) {
-        res.status(404).send(({ message: `Пользователь по указанному id: ${userId} не найден.` }));
+        next(new BadRequestError(`Пользователь по указанному id: ${userId} не найден.`));
       } else {
         res.send(user);
       }
     })
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((err) => next(err));
 };
 
-const createUser = (req, res) => {
-  User.create({ ...req.body })
-    .then((newUser) => res.send(newUser))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные при создании пользователя' });
+const createUser = (req, res, next) => {
+  const {
+    name, about, avatar, email, password,
+  } = req.body;
+
+  if (!email || !password) {
+    next(new BadRequestError('Не передан email или пароль'));
+  }
+
+  User.findOne({ email })
+    .then((user) => {
+      if (user) {
+        next(new RequestConflictError(`Пользователь с почтой ${email} уже зарегистрирован`));
       } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+        bcrypt.hash(req.body.password, 10)
+          .then((hash) => {
+            User.create({
+              name,
+              about,
+              avatar,
+              email,
+              password: hash,
+            })
+              .then((newUser) => res.send(newUser))
+              .catch((err) => {
+                if (err.name === 'ValidationError') {
+                  next(new BadRequestError('Переданы некорректные данные'));
+                } else {
+                  next(err);
+                }
+              });
+          })
+          .catch((err) => next(err));
       }
     });
 };
 
-const updateUserInfo = (req, res) => {
+const updateUserInfo = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, { ...req.body }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        res.status(404).send(({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }));
+        next(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`));
       } else {
         res.send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
+        next(new BadRequestError('Переданы некорректные данные'));
       } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+        next(err);
       }
     });
 };
 
-const updateUserAvatar = (req, res) => {
+const updateUserAvatar = (req, res, next) => {
   User.findByIdAndUpdate(req.user._id, { ...req.body }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
-        res.status(404).send(({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }));
+        next(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`));
       } else {
         res.send(user);
       }
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        res.status(400).send({ message: 'Переданы некорректные данные' });
+        next(new BadRequestError('Переданы некорректные данные'));
       } else {
-        res.status(500).send({ message: 'На сервере произошла ошибка' });
+        next(err);
       }
     });
+};
+
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !password) {
+    next(new BadRequestError('Не получен email или пароль'));
+  }
+
+  return User.findUserByCredentials(email, password)
+    .then((user) => {
+      if (!user) {
+        throw new UnauthorizedError('Ошибка авторизации');
+      }
+
+      const token = jwt.sign(
+        { _id: user._id },
+        'some-secret-key',
+        { expiresIn: '7d' },
+      );
+      res
+        .cookie('jwt', token, {
+          maxAge: 3600000 * 24 * 7,
+          httpOnly: true,
+          sameSite: true,
+        })
+        .send({ jwt: token });
+    })
+    .catch(() => {
+      res.status(500).send({ message: 'На сервере произошла ошибка' });
+    });
+};
+const getCurrentUser = (req, res, next) => {
+  const { userId } = req.user._id;
+
+  User.findById({ userId })
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError(({ message: `Пользователь с указанным id: ${userId} не найден.` }));
+      }
+      res.send(user);
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError(`Указан некорректный id: ${userId} пользователя.`));
+      } else {
+        next(err);
+      }
+    });
+};
+
+const unauthorized = (req, res) => {
+  const token = '';
+  res.cookie('jwt', token, {
+    httpOnly: true,
+    sameSite: true,
+    maxAge: 3600000 * 24 * 7,
+  });
+  res.send({ token, message: 'Выход выполнен' });
 };
 
 module.exports = {
@@ -79,4 +169,7 @@ module.exports = {
   createUser,
   updateUserInfo,
   updateUserAvatar,
+  login,
+  getCurrentUser,
+  unauthorized,
 };

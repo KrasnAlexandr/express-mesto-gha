@@ -1,9 +1,9 @@
 const Card = require('../models/card');
 
-const getAllCards = (req, res) => {
+const getAllCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.send(cards))
-    .catch(() => res.status(500).send({ message: 'На сервере произошла ошибка' }));
+    .catch((err) => next(err));
 };
 
 const createCard = (req, res) => {
@@ -28,7 +28,7 @@ const deleteCard = (req, res) => {
     return;
   }
 
-  Card.findByIdAndRemove(cardId)
+  Card.findByIdAndRemove({ cardId })
     .then((card) => {
       if (!card) {
         res.status(404).send({ message: `Карточка с указанным id: ${cardId} не найдена.` });

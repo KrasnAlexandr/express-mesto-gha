@@ -5,12 +5,14 @@ const {
   createUser,
   updateUserInfo,
   updateUserAvatar,
+  getCurrentUser,
 } = require('../controllers/users');
 
 users.get('/', getAllUsers);
-users.post('/', createUser);
-
+users.get('/me', getCurrentUser);
 users.get('/:userId', getUserById);
+
+users.post('/', createUser);
 
 users.patch('/me', updateUserInfo);
 
