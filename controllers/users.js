@@ -149,7 +149,7 @@ const login = (req, res, next) => {
     });
 };
 const getCurrentUser = (req, res, next) => {
-  const { userId } = req.user._id;
+  const { userId } = req.params;
 
   User.findById(userId)
     .then((user) => {
