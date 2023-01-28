@@ -54,7 +54,13 @@ const createUser = (req, res, next) => {
               email,
               password: hash,
             })
-              .then((newUser) => res.send(newUser))
+              .then((newUser) => res.send({
+                _id: newUser._id,
+                name: newUser.name,
+                about: newUser.about,
+                avatar,
+                email: newUser.email,
+              }))
               .catch((err) => {
                 if (err.name === 'ValidationError') {
                   next(new BadRequestError('Переданы некорректные данные'));
@@ -111,27 +117,29 @@ const login = (req, res, next) => {
     next(new BadRequestError('Не получен email или пароль'));
   }
 
-  return User.findUserByCredentials(email, password)
+  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        throw new UnauthorizedError('Ошибка авторизации');
+        throw new UnauthorizedError(`Пользователь с почтой ${email} не найден`);
       }
-
       const token = jwt.sign(
         { _id: user._id },
         'some-secret-key',
         { expiresIn: '7d' },
       );
-      res
-        .cookie('jwt', token, {
-          maxAge: 3600000 * 24 * 7,
-          httpOnly: true,
-          sameSite: true,
-        })
-        .send({ jwt: token });
+      res.cookie('jwt', token, {
+        httpOnly: true,
+        sameSite: true,
+        maxAge: 3600000 * 24 * 7,
+      });
+      res.send({ token });
     })
-    .catch(() => {
-      res.status(500).send({ message: 'На сервере произошла ошибка' });
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        next(new BadRequestError('Некорректный запрос'));
+      } else {
+        next(err);
+      }
     });
 };
 const getCurrentUser = (req, res, next) => {

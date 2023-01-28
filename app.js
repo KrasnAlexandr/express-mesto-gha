@@ -4,22 +4,16 @@ const { mongoose } = require('mongoose');
 const bodyParser = require('body-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const rateLimit = require('express-rate-limit');
-
 const users = require('./routes/users');
 const cards = require('./routes/cards');
-
-const {
-  createUser,
-  login,
-  unauthorized,
-} = require('./controllers/users');
+const { createUser, login, unauthorized } = require('./controllers/users');
+const NotFoundError = require('./errors/NotFoundError');
 const auth = require('./middlewares/auth');
-
-const { PORT = 3000 } = process.env;
 
 mongoose.set('strictQuery', false);
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
 
+const { PORT = 3000 } = process.env;
 const app = express();
 
 app.use(helmet());
@@ -63,8 +57,9 @@ app.use(auth);
 
 app.use('/users', users);
 app.use('/cards', cards);
-app.use('*', (req, res) => {
-  res.status(404).send({ message: 'По вашему запросу ничего не найдено' });
+
+app.use('*', (req, res, next) => {
+  next(new NotFoundError('По вашему запросу ничего не найдено'));
 }); // должен быть последним
 
 app.use(errors());
