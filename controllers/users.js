@@ -149,18 +149,16 @@ const login = (req, res, next) => {
     });
 };
 const getCurrentUser = (req, res, next) => {
-  const { userId } = req.params;
-
-  User.findById(userId)
+  User.findById(req.user._id)
     .then((user) => {
       if (!user) {
-        throw new NotFoundError(({ message: `Пользователь с указанным id: ${userId} не найден.` }));
+        throw new NotFoundError(({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }));
       }
       res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        next(new BadRequestError(`Указан некорректный id: ${userId} пользователя.`));
+        next(new BadRequestError(`Указан некорректный id: ${req.user._id} пользователя.`));
       } else {
         next(err);
       }
