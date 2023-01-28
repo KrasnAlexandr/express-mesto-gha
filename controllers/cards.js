@@ -32,7 +32,7 @@ const deleteCard = (req, res, next) => {
     return;
   }
 
-  Card.findByIdAndRemove({ cardId })
+  Card.findByIdAndRemove(cardId)
     .populate(['owner', 'likes'])
     .then((card) => {
       if (!card) {
@@ -43,11 +43,11 @@ const deleteCard = (req, res, next) => {
         throw new ForbiddenError('Отсутствуют права на удаление этой карточки');
       }
 
-      res.send({ message: 'Карточка была удалена' });
+      res.status(200).send({ message: 'Карточка была удалена' });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new ForbiddenError('Некорректный запрос'));
+        next(new NotFoundError('Некорректный запрос'));
       } else {
         next(err);
       }

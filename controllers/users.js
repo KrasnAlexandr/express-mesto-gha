@@ -20,7 +20,7 @@ const getUserById = (req, res, next) => {
     return;
   }
 
-  User.findById({ userId })
+  User.findById(userId)
     .then((user) => {
       if (!user) {
         next(new NotFoundError(`Пользователь по указанному id: ${userId} не найден.`));
@@ -151,7 +151,7 @@ const login = (req, res, next) => {
 const getCurrentUser = (req, res, next) => {
   const { userId } = req.user._id;
 
-  User.findById({ userId })
+  User.findById(userId)
     .then((user) => {
       if (!user) {
         throw new NotFoundError(({ message: `Пользователь с указанным id: ${userId} не найден.` }));
