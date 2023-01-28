@@ -23,12 +23,18 @@ const getUserById = (req, res, next) => {
   User.findById({ userId })
     .then((user) => {
       if (!user) {
-        next(new BadRequestError(`Пользователь по указанному id: ${userId} не найден.`));
+        next(new NotFoundError(`Пользователь по указанному id: ${userId} не найден.`));
       } else {
-        res.send(user);
+        res.status(200).send(user);
       }
     })
-    .catch((err) => next(err));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        next(new BadRequestError(`Указан некорректный id: ${userId} пользователя.`));
+      } else {
+        next(err);
+      }
+    });
 };
 
 const createUser = (req, res, next) => {
@@ -150,7 +156,7 @@ const getCurrentUser = (req, res, next) => {
       if (!user) {
         throw new NotFoundError(({ message: `Пользователь с указанным id: ${userId} не найден.` }));
       }
-      res.send(user);
+      res.status(200).send(user);
     })
     .catch((err) => {
       if (err.name === 'ValidationError') {
