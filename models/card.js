@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { validateRegex } = require('../utils/validateRegex');
 
 const cardSchema = new mongoose.Schema({
   name: {
@@ -10,7 +11,10 @@ const cardSchema = new mongoose.Schema({
   link: {
     type: String,
     required: true,
-    validate: /https?:\/\/(www)?[0-9a-z\-._~:/?#[\]@!$&'()*+,;=]+#?$/i,
+    validate: {
+      validator: validateRegex,
+      message: 'Указана некорректная ссылка',
+    },
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -26,7 +30,7 @@ const cardSchema = new mongoose.Schema({
   ],
   createdAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
 });
 

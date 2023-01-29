@@ -15,11 +15,6 @@ const getAllUsers = (req, res, next) => {
 const getUserById = (req, res, next) => {
   const { userId } = req.params;
 
-  if (userId.length !== 24) {
-    next(new BadRequestError(`Указан некорректный id: ${userId} пользователя.`));
-    return;
-  }
-
   User.findById(userId)
     .then((user) => {
       if (!user) {
@@ -37,51 +32,39 @@ const getUserById = (req, res, next) => {
     });
 };
 
-const createUser = (req, res, next) => {
+const createUser = async (req, res, next) => {
   const {
     name, about, avatar, email, password,
   } = req.body;
 
-  if (!email || !password) {
-    next(new BadRequestError('Не передан email или пароль'));
-  }
-
-  User.findOne({ email })
-    .then((user) => {
-      if (user) {
-        next(new RequestConflictError(`Пользователь с почтой ${email} уже зарегистрирован`));
-      } else {
-        bcrypt.hash(req.body.password, 10)
-          .then((hash) => {
-            User.create({
-              name,
-              about,
-              avatar,
-              email,
-              password: hash,
-            })
-              .then((newUser) => res.send({
-                _id: newUser._id,
-                name: newUser.name,
-                about: newUser.about,
-                avatar,
-                email: newUser.email,
-              }))
-              .catch((err) => {
-                if (err.name === 'ValidationError') {
-                  next(new BadRequestError('Переданы некорректные данные'));
-                } else {
-                  next(err);
-                }
-              });
-          })
-          .catch((err) => next(err));
-      }
+  try {
+    const hashPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({
+      email, password: hashPassword, name, about, avatar,
     });
+    res.status(200).send({
+      user: {
+        _id: user._id,
+        email: user.email,
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+      },
+    });
+  } catch (err) {
+    if (err.name === 'MongoServerError' && err.code === 11000) {
+      next(new RequestConflictError(`Пользователь с почтой ${email} уже зарегистрирован`));
+    } else {
+      next(err);
+    }
+  }
 };
 
 const updateUserInfo = (req, res, next) => {
-  User.findByIdAndUpdate(req.user._id, { ...req.body }, { new: true, runValidators: true })
+  const userId = req.user._id;
+  const { name, about } = req.body;
+
+  User.findByIdAndUpdate(userId, { name, about }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         next(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`));
@@ -99,7 +82,10 @@ const updateUserInfo = (req, res, next) => {
 };
 
 const updateUserAvatar = (req, res, next) => {
-  User.findByIdAndUpdate(req.user._id, { ...req.body }, { new: true, runValidators: true })
+  const userId = req.user._id;
+  const { avatar } = req.body;
+
+  User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
     .then((user) => {
       if (!user) {
         next(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`));
@@ -119,11 +105,7 @@ const updateUserAvatar = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    next(new BadRequestError('Не получен email или пароль'));
-  }
-
-  User.findOne({ email }).select('+password')
+  User.findUserByCredentials(email, password)
     .then((user) => {
       if (!user) {
         throw new UnauthorizedError(`Пользователь с почтой ${email} не найден`);

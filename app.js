@@ -9,6 +9,8 @@ const cards = require('./routes/cards');
 const { createUser, login, unauthorized } = require('./controllers/users');
 const NotFoundError = require('./errors/NotFoundError');
 const auth = require('./middlewares/auth');
+const error = require('./middlewares/error');
+const { validateRegex } = require('./utils/validateRegex');
 
 mongoose.set('strictQuery', false);
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
@@ -43,7 +45,7 @@ app.post(
     body: Joi.object().keys({
       name: Joi.string().min(2).max(30),
       about: Joi.string().min(2).max(30),
-      avatar: Joi.string().pattern(/^(https?:\/\/)?(w{3}\.)?[a-zA-Z0-9@:%._+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b(?:[-a-zA-Z0-9()@:%_+.~#?&/=]*)$/),
+      avatar: Joi.string().custom(validateRegex, 'custom validation'),
       email: Joi.string().required().email(),
       password: Joi.string().required(),
     }),
@@ -63,14 +65,6 @@ app.use('*', (req, res, next) => {
 }); // должен быть последним
 
 app.use(errors());
-
-app.use((err, req, res, next) => {
-  if (err.statusCode) {
-    res.status(err.statusCode).send({ message: err.message });
-  } else {
-    res.status(500).send({ message: `На сервере произошла ошибка': ${err.message}` });
-  }
-  next();
-});
+app.use(error);
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
