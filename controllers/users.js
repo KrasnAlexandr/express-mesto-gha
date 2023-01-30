@@ -91,8 +91,10 @@ const login = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findUserByCredentials(email, password)
-    .orFail(new UnauthorizedError(`Пользователь с почтой ${email} не найден`))
     .then((user) => {
+      if (!user) {
+        throw new UnauthorizedError(`Пользователь с почтой ${email} не найден`);
+      }
       const token = jwt.sign(
         { _id: user._id },
         'some-secret-key',
@@ -103,7 +105,6 @@ const login = (req, res, next) => {
         sameSite: true,
         maxAge: 3600000 * 24 * 7,
       });
-
       res.send({ token });
     })
     .catch((err) => {
