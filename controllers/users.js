@@ -16,13 +16,8 @@ const getUserById = (req, res, next) => {
   const { userId } = req.params;
 
   User.findById(userId)
-    .then((user) => {
-      if (!user) {
-        next(new NotFoundError(`Пользователь по указанному id: ${userId} не найден.`));
-      } else {
-        res.status(200).send(user);
-      }
-    })
+    .orFail(new NotFoundError(`Пользователь по указанному id: ${userId} не найден.`))
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'CastError') {
         next(new BadRequestError(`Указан некорректный id: ${userId} пользователя.`));
@@ -65,13 +60,8 @@ const updateUserInfo = (req, res, next) => {
   const { name, about } = req.body;
 
   User.findByIdAndUpdate(userId, { name, about }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        next(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`));
-      } else {
-        res.send(user);
-      }
-    })
+    .orFail(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные'));
@@ -86,13 +76,8 @@ const updateUserAvatar = (req, res, next) => {
   const { avatar } = req.body;
 
   User.findByIdAndUpdate(userId, { avatar }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        next(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`));
-      } else {
-        res.send(user);
-      }
-    })
+    .orFail(new NotFoundError(`Пользователь с указанным id: ${req.user._id} не найден.`))
+    .then((user) => res.send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError('Переданы некорректные данные'));
@@ -106,10 +91,8 @@ const login = (req, res, next) => {
   const { email, password } = req.body;
 
   User.findUserByCredentials(email, password)
+    .orFail(new UnauthorizedError(`Пользователь с почтой ${email} не найден`))
     .then((user) => {
-      if (!user) {
-        throw new UnauthorizedError(`Пользователь с почтой ${email} не найден`);
-      }
       const token = jwt.sign(
         { _id: user._id },
         'some-secret-key',
@@ -120,6 +103,7 @@ const login = (req, res, next) => {
         sameSite: true,
         maxAge: 3600000 * 24 * 7,
       });
+
       res.send({ token });
     })
     .catch((err) => {
@@ -132,12 +116,8 @@ const login = (req, res, next) => {
 };
 const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
-    .then((user) => {
-      if (!user) {
-        throw new NotFoundError(({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }));
-      }
-      res.status(200).send(user);
-    })
+    .orFail(new NotFoundError({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }))
+    .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         next(new BadRequestError(`Указан некорректный id: ${req.user._id} пользователя.`));
