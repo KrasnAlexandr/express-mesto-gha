@@ -1,6 +1,6 @@
 module.exports.validateRegex = (url) => {
   // eslint-disable-next-line
-  const regex = /^(https?:\/\/)?([\w\.]+)\.([a-z]{2,6}\.?)(\/[\w\.]*)*\/?$/;
+  const regex = /(http|ftp|https):\/\/([\w_-]+(?:(?:\.[\w_-]+)+))([\w.,@?^=%&:\/~+#-]*[\w@?^=%&\/~+#-])/;
   if (regex.test(url)) {
     return url;
   }
