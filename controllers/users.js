@@ -2,7 +2,6 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const BadRequestError = require('../errors/BadRequestError');
-const UnauthorizedError = require('../errors/UnauthorizedError');
 const NotFoundError = require('../errors/NotFoundError');
 const RequestConflictError = require('../errors/RequestConflictError');
 
@@ -49,6 +48,8 @@ const createUser = async (req, res, next) => {
   } catch (err) {
     if (err.name === 'MongoServerError' && err.code === 11000) {
       next(new RequestConflictError(`Пользователь с почтой ${email} уже зарегистрирован`));
+    } else if (err.name === 'ValidationError') {
+      next(new BadRequestError('Переданы некорректные данные'));
     } else {
       next(err);
     }
@@ -92,9 +93,6 @@ const login = (req, res, next) => {
 
   User.findUserByCredentials(email, password)
     .then((user) => {
-      if (!user) {
-        throw new UnauthorizedError(`Пользователь с почтой ${email} не найден`);
-      }
       const token = jwt.sign(
         { _id: user._id },
         'some-secret-key',
@@ -107,25 +105,13 @@ const login = (req, res, next) => {
       });
       res.send({ token });
     })
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadRequestError('Некорректный запрос'));
-      } else {
-        next(err);
-      }
-    });
+    .catch((err) => next(err));
 };
 const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .orFail(new NotFoundError({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }))
     .then((user) => res.status(200).send(user))
-    .catch((err) => {
-      if (err.name === 'ValidationError') {
-        next(new BadRequestError(`Указан некорректный id: ${req.user._id} пользователя.`));
-      } else {
-        next(err);
-      }
-    });
+    .catch((err) => next(err));
 };
 
 const unauthorized = (req, res) => {

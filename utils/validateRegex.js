@@ -1,5 +1,6 @@
 module.exports.validateRegex = (url) => {
-  const regex = /https?:\/\/(www)?[0-9a-z\-._~:/?#[\]@!$&'()*+,;=]+#?$/i;
+  // eslint-disable-next-line
+  const regex = /^(https?:\/\/)?([\w\.]+)\.([a-z]{2,6}\.?)(\/[\w\.]*)*\/?$/;
   if (regex.test(url)) {
     return url;
   }
