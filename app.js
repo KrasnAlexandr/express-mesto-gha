@@ -33,7 +33,14 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(requestLogger);
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    'https://mesto.alexred.nomoredomainsclub.ru',
+    'http://localhost:3000',
+    'https://web.postman.co',
+  ],
+  credentials: true,
+}));
 
 app.post(
   '/signin',
