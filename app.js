@@ -1,10 +1,12 @@
+require('dotenv').config();
 const express = require('express');
-const helmet = require('helmet');
 const { mongoose } = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const rateLimit = require('express-rate-limit');
-const cors = require('cors');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { createUser, login, logout } = require('./controllers/users');
@@ -29,6 +31,7 @@ app.use(
   }),
 );
 app.use(express.json());
+app.use(cookieParser);
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(requestLogger);
