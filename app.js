@@ -4,6 +4,7 @@ const { mongoose } = require('mongoose');
 const bodyParser = require('body-parser');
 const { celebrate, Joi, errors } = require('celebrate');
 const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { createUser, login, logout } = require('./controllers/users');
@@ -12,7 +13,7 @@ const auth = require('./middlewares/auth');
 const error = require('./middlewares/error');
 const { validateRegex } = require('./utils/validateRegex');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const { corsPolicy } = require('./middlewares/cors');
+const corsOptions = require('./utils/corsOptions');
 
 mongoose.set('strictQuery', false);
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
@@ -33,7 +34,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(requestLogger);
 
-app.use(corsPolicy);
+app.use(cors(corsOptions));
 
 app.post(
   '/signin',
