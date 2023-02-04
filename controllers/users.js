@@ -98,12 +98,12 @@ const login = (req, res, next) => {
         'some-secret-key',
         { expiresIn: '7d' },
       );
-      res.cookie('jwt', token, {
+      res.status(200).cookie('jwt', token, {
         httpOnly: true,
         sameSite: true,
         maxAge: 3600000 * 24 * 7,
-      });
-      res.send(user);
+      })
+        .send({ message: 'Пользователь авторизован!' });
     })
     .catch((err) => next(err));
 };
