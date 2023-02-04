@@ -11,6 +11,7 @@ const NotFoundError = require('./errors/NotFoundError');
 const auth = require('./middlewares/auth');
 const error = require('./middlewares/error');
 const { validateRegex } = require('./utils/validateRegex');
+const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 mongoose.set('strictQuery', false);
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
@@ -28,6 +29,8 @@ app.use(
 );
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+
+app.use(requestLogger);
 
 app.post(
   '/signin',
@@ -63,6 +66,8 @@ app.use('/cards', cards);
 app.use('*', (req, res, next) => {
   next(new NotFoundError('По вашему запросу ничего не найдено'));
 }); // должен быть последним
+
+app.use(errorLogger);
 
 app.use(errors());
 app.use(error);
