@@ -13,7 +13,7 @@ const auth = require('./middlewares/auth');
 const error = require('./middlewares/error');
 const { validateRegex } = require('./utils/validateRegex');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
-const corsOptions = require('./utils/corsOptions');
+const { corsOptions } = require('./utils/corsOptions');
 
 mongoose.set('strictQuery', false);
 mongoose.connect('mongodb://127.0.0.1:27017/mestodb');
