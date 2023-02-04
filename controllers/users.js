@@ -115,13 +115,13 @@ const getCurrentUser = (req, res, next) => {
 };
 
 const logout = (req, res) => {
-  const token = '';
-  res.cookie('jwt', token, {
-    httpOnly: true,
-    sameSite: true,
-    maxAge: 3600000 * 24 * 7,
-  });
-  res.send({ token, message: 'Выход выполнен' });
+  const { email } = req.body;
+
+  res
+    .clearCookie('jwt', {
+      httpOnly: true, domain: 'nomoredomainsclub.ru', secure: true, path: '/',
+    })
+    .send({ message: `Пользователь ${email} вышел из системы` });
 };
 
 module.exports = {
