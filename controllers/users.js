@@ -103,7 +103,7 @@ const login = (req, res, next) => {
         sameSite: true,
         maxAge: 3600000 * 24 * 7,
       });
-      res.send({ token });
+      res.send(user);
     })
     .catch((err) => next(err));
 };
@@ -114,7 +114,7 @@ const getCurrentUser = (req, res, next) => {
     .catch((err) => next(err));
 };
 
-const unauthorized = (req, res) => {
+const logout = (req, res) => {
   const token = '';
   res.cookie('jwt', token, {
     httpOnly: true,
@@ -132,5 +132,5 @@ module.exports = {
   updateUserAvatar,
   login,
   getCurrentUser,
-  unauthorized,
+  logout,
 };
