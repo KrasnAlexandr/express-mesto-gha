@@ -44,6 +44,12 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));
 
+app.get('/crash-test', () => {
+  setTimeout(() => {
+    throw new Error('Сервер сейчас упадёт');
+  }, 0);
+});
+
 app.post(
   '/signin',
   celebrate({
