@@ -37,8 +37,8 @@ app.use(requestLogger);
 app.use(cors({
   origin: [
     'https://mesto.alexred.nomoredomainsclub.ru',
+    'http://mesto.alexred.nomoredomainsclub.ru',
     'http://localhost:3000',
-    'https://web.postman.co',
   ],
   credentials: true,
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
