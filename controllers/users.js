@@ -1,12 +1,10 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-require('dotenv').config();
 const User = require('../models/user');
 const BadRequestError = require('../errors/BadRequestError');
 const NotFoundError = require('../errors/NotFoundError');
 const RequestConflictError = require('../errors/RequestConflictError');
-
-const { NODE_ENV, JWT_SECRET } = process.env;
+const UnauthorizedError = require('../errors/UnauthorizedError');
 
 const getAllUsers = (req, res, next) => {
   User.find({})
@@ -91,6 +89,7 @@ const updateUserAvatar = (req, res, next) => {
     });
 };
 
+const { NODE_ENV, JWT_SECRET } = process.env;
 const login = (req, res, next) => {
   const { email, password } = req.body;
 
@@ -101,26 +100,14 @@ const login = (req, res, next) => {
         NODE_ENV === 'production' ? JWT_SECRET : 'jwt',
         { expiresIn: '7d' },
       );
-      res.status(200).cookie('jwt', token, {
-        httpOnly: true,
-        sameSite: true,
-        maxAge: 3600000 * 24 * 7,
-      })
-        .send({ message: 'Пользователь авторизован!' });
+      res.send({ token });
     })
-    .catch((err) => next(err));
+    .catch((err) => next(new UnauthorizedError(err.message)));
 };
 const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .orFail(new NotFoundError({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }))
-    .then((user) => res.status(200)
-      .send({
-        name: user.name,
-        about: user.about,
-        avatar: user.avatar,
-        email: user.email,
-        _id: user._id,
-      })
+    .then((user) => res.send(user)
       .catch((err) => next(err)));
 };
 

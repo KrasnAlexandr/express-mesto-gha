@@ -1,12 +1,11 @@
+require('dotenv').config();
 const express = require('express');
-const cookieParser = require('cookie-parser');
+const cors = require('cors');
 const { mongoose } = require('mongoose');
 const bodyParser = require('body-parser');
 const { celebrate, Joi, errors } = require('celebrate');
-const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const auth = require('./middlewares/auth');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { createUser, login, logout } = require('./controllers/users');
@@ -30,7 +29,6 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use(cookieParser());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 app.use(requestLogger);
@@ -42,6 +40,7 @@ app.use(cors({
     'https://web.postman.co',
   ],
   credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
 }));
 
 app.post(
@@ -70,8 +69,8 @@ app.post(
 
 app.post('/signout', logout);
 
-app.use('/users', auth, users);
-app.use('/cards', auth, cards);
+app.use('/users', users);
+app.use('/cards', cards);
 
 app.use('*', (req, res, next) => {
   next(new NotFoundError('По вашему запросу ничего не найдено'));
