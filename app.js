@@ -8,7 +8,8 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
-const { createUser, login, logout } = require('./controllers/users');
+const auth = require('./middlewares/auth');
+const { createUser, login } = require('./controllers/users');
 const NotFoundError = require('./errors/NotFoundError');
 const error = require('./middlewares/error');
 const { validateRegex } = require('./utils/validateRegex');
@@ -67,7 +68,7 @@ app.post(
   createUser,
 );
 
-app.post('/signout', logout);
+app.use(auth);
 
 app.use('/users', users);
 app.use('/cards', cards);

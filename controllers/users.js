@@ -111,16 +111,6 @@ const getCurrentUser = (req, res, next) => {
       .catch((err) => next(err)));
 };
 
-const logout = (req, res) => {
-  const { email } = req.body;
-
-  res
-    .clearCookie('jwt', {
-      httpOnly: true, domain: 'nomoredomainsclub.ru', secure: true, path: '/',
-    })
-    .send({ message: `Пользователь ${email} вышел из системы` });
-};
-
 module.exports = {
   getAllUsers,
   getUserById,
@@ -129,5 +119,4 @@ module.exports = {
   updateUserAvatar,
   login,
   getCurrentUser,
-  logout,
 };
