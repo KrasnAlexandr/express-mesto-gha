@@ -6,6 +6,7 @@ const { celebrate, Joi, errors } = require('celebrate');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const auth = require('./middlewares/auth');
 const users = require('./routes/users');
 const cards = require('./routes/cards');
 const { createUser, login, logout } = require('./controllers/users');
@@ -69,8 +70,8 @@ app.post(
 
 app.post('/signout', logout);
 
-app.use('/users', users);
-app.use('/cards', cards);
+app.use('/users', auth, users);
+app.use('/cards', auth, cards);
 
 app.use('*', (req, res, next) => {
   next(new NotFoundError('По вашему запросу ничего не найдено'));

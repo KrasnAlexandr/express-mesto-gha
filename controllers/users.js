@@ -113,8 +113,15 @@ const login = (req, res, next) => {
 const getCurrentUser = (req, res, next) => {
   User.findById(req.user._id)
     .orFail(new NotFoundError({ message: `Пользователь с указанным id: ${req.user._id} не найден.` }))
-    .then((user) => res.status(200).send(user))
-    .catch((err) => next(err));
+    .then((user) => res.status(200)
+      .send({
+        name: user.name,
+        about: user.about,
+        avatar: user.avatar,
+        email: user.email,
+        _id: user._id,
+      })
+      .catch((err) => next(err)));
 };
 
 const logout = (req, res) => {
